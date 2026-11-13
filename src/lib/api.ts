@@ -7,9 +7,17 @@ const DEFAULT_NATIVE_API_BASE_URL =
   'https://ais-pre-ladn4u6ehmgdtu4mur2nta-37682163655.asia-northeast1.run.app';
 
 export function getApiBaseUrl(): string {
-  const configured = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+  const configured = (import.meta.env.VITE_API_BASE_URL as string | undefined)
+    ?.trim()
+    .replace(/\/+$/, '');
   if (Capacitor.isNativePlatform()) {
-    return (configured || DEFAULT_NATIVE_API_BASE_URL).replace(/\/+$/, '');
+    return configured || DEFAULT_NATIVE_API_BASE_URL;
+  }
+  if (configured && /^https?:\/\//i.test(configured)) {
+    if (typeof window !== 'undefined' && window.location.origin === configured) {
+      return '';
+    }
+    return configured;
   }
   return '';
 }

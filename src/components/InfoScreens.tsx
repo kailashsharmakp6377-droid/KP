@@ -105,7 +105,7 @@ export function SupportScreen({ user, onBack }: SupportScreenProps) {
             </h2>
           </div>
           <p className="text-sm text-slate-700">
-            Submit your payment UTR or question below for direct Admin review.
+            Submit your payment UTR or question below for direct KP HUBE review.
           </p>
         </div>
       </div>

@@ -1,0 +1,170 @@
+{
+  "users": [
+    {
+      "id": "usr_27f9dee3-7",
+      "name": "KP HUBE",
+      "email": "phone.919352354092@student.kphube.local",
+      "phone": "+919352354092",
+      "role": "student",
+      "avatarUrl": null,
+      "passwordHash": "ac195feb88015fdca72fc5812c68186b:afab430dc038e859fcabbe60bf6a504da8a2334e23ffef9bbfa486abb1edd25b07b0b59b412d587481de814a5b413fd583eddc4a693328049c45484961f0769b",
+      "createdAt": "2026-11-13T02:39:04.642Z"
+    }
+  ],
+  "admins": [],
+  "categories": [
+    {
+      "id": "cat-complete",
+      "name": "YouTube Mastery",
+      "slug": "youtube-mastery",
+      "description": "Complete YouTube Growth, Monetization, Title, Thumbnail & Tips Course by KP HUBE",
+      "order": 1
+    }
+  ],
+  "courses": [
+    {
+      "id": "course-kp-hube-complete",
+      "title": "KP HUBE Complete YouTube Course",
+      "subtitle": "Channel Growth, Monetization, Viral Titles, Thumbnails & Pro YouTube Tricks",
+      "description": "KP HUBE ka Complete YouTube Mastery Course — isme aap seekhenge apna YouTube channel kaise grow karein, channel monetize kaise karein, high-CTR viral titles aur clickable thumbnails kaise banayein, aur fastest growth ke liye secret YouTube tricks & tips.",
+      "categoryId": "cat-complete",
+      "categoryName": "YouTube Mastery",
+      "thumbnailKey": "founder:photo1",
+      "price": 499,
+      "discountPrice": null,
+      "durationLabel": "5 Modules · HD Video",
+      "lessonsCount": 5,
+      "chapters": [
+        "Module 1: Channel Growth & Strategy",
+        "Module 2: Viral Titles & Thumbnails",
+        "Module 3: Monetization & Pro YouTube Tricks"
+      ],
+      "learningObjectives": [
+        "Apna YouTube Channel 0 se tezi se kaise Grow karein",
+        "Channel Monetize karne ke sabhi steps (1000 Subs, 4000 Hrs & AdSense)",
+        "High-CTR Viral Titles likhne aur SEO rank karne ka tarika",
+        "Clickable Thumbnails design karna jo views double karein",
+        "Secret YouTube Tricks & Tips jo bade creators use karte hain"
+      ],
+      "isFeatured": true,
+      "isPopular": true,
+      "isPublished": true,
+      "createdAt": "2026-11-13T03:03:06.482Z",
+      "updatedAt": "2026-11-13T03:03:06.482Z"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "les-kp-1",
+      "courseId": "course-kp-hube-complete",
+      "chapterTitle": "Module 1: Channel Growth & Strategy",
+      "title": "01. Apna YouTube Channel Kaise Grow Karein",
+      "description": "YouTube Algorithm kaise kaam karta hai, sahi niche select karna, aur 0 se tezi se subscribers aur views badhane ki complete strategy.",
+      "order": 1,
+      "durationSeconds": 12,
+      "durationLabel": "14:20",
+      "isFreePreview": false,
+      "hasVideo": true,
+      "videoFileName": "les-kp-1.mp4",
+      "videoUrl": null,
+      "pdfTitle": "YouTube Channel Growth Guide PDF",
+      "hasPdf": true,
+      "pdfFileName": "les-kp-1.pdf"
+    },
+    {
+      "id": "les-kp-2",
+      "courseId": "course-kp-hube-complete",
+      "chapterTitle": "Module 2: Viral Titles & Thumbnails",
+      "title": "02. Viral Title Kaise Likhein (High-CTR & SEO)",
+      "description": "Aise clickable aur searchable YouTube titles banana jo search me rank karein aur browse feature me logon ko click karne par majboor karein.",
+      "order": 2,
+      "durationSeconds": 12,
+      "durationLabel": "11:45",
+      "isFreePreview": false,
+      "hasVideo": true,
+      "videoFileName": "les-kp-2.mp4",
+      "videoUrl": null,
+      "pdfTitle": "Viral Title Formula & Keywords Sheet",
+      "hasPdf": true,
+      "pdfFileName": "les-kp-2.pdf"
+    },
+    {
+      "id": "les-kp-3",
+      "courseId": "course-kp-hube-complete",
+      "chapterTitle": "Module 2: Viral Titles & Thumbnails",
+      "title": "03. Clickable YouTube Thumbnail Design Masterclass",
+      "description": "High-CTR thumbnail psychology, color contrast, clean text aur mobile screen par stand-out karne wale thumbnails banana seekhein.",
+      "order": 3,
+      "durationSeconds": 12,
+      "durationLabel": "15:30",
+      "isFreePreview": false,
+      "hasVideo": true,
+      "videoFileName": "les-kp-3.mp4",
+      "videoUrl": null,
+      "pdfTitle": "Clickable Thumbnail Checklist PDF",
+      "hasPdf": true,
+      "pdfFileName": "les-kp-3.pdf"
+    },
+    {
+      "id": "les-kp-4",
+      "courseId": "course-kp-hube-complete",
+      "chapterTitle": "Module 3: Monetization & Pro YouTube Tricks",
+      "title": "04. Apna YouTube Channel Kaise Monetize Karein",
+      "description": "1000 Subscribers, 4000 Watch Hours / 10M Shorts views criteria, AdSense approval, copyright rules aur YouTube se earning ke sabhi tarike.",
+      "order": 4,
+      "durationSeconds": 12,
+      "durationLabel": "16:10",
+      "isFreePreview": false,
+      "hasVideo": true,
+      "videoFileName": "les-kp-4.mp4",
+      "videoUrl": null,
+      "pdfTitle": "YouTube Monetization Roadmap PDF",
+      "hasPdf": true,
+      "pdfFileName": "les-kp-4.pdf"
+    },
+    {
+      "id": "les-kp-5",
+      "courseId": "course-kp-hube-complete",
+      "chapterTitle": "Module 3: Monetization & Pro YouTube Tricks",
+      "title": "05. Pro YouTube Tricks & Tips (Fast Growth Secrets)",
+      "description": "Upload timing, YouTube Studio analytics, Shorts-to-Long audience funnel aur video viral karne ki practical YouTube tricks & tips.",
+      "order": 5,
+      "durationSeconds": 12,
+      "durationLabel": "13:50",
+      "isFreePreview": false,
+      "hasVideo": true,
+      "videoFileName": "les-kp-5.mp4",
+      "videoUrl": null,
+      "pdfTitle": "YouTube Tricks & Tips Action Plan PDF",
+      "hasPdf": true,
+      "pdfFileName": "les-kp-5.pdf"
+    }
+  ],
+  "purchases": [],
+  "payments": [],
+  "courseProgress": [],
+  "notifications": [
+    {
+      "id": "notif-welcome",
+      "userId": "all",
+      "title": "Welcome to KP HUBE",
+      "message": "Explore practical courses starting at ₹499. Learn • Grow • Succeed.",
+      "type": "announcement",
+      "isRead": false,
+      "createdAt": "2026-11-13T02:07:39.238Z"
+    }
+  ],
+  "supportRequests": [],
+  "brandMedia": {
+    "photo1DataUrl": "/assets/aistudio/WhatsApp_Image_2026-11-11_at_12.28.57_AM_c5373de0.jpeg",
+    "photo1UpdatedAt": "2026-11-13T02:19:26.614Z",
+    "photo2DataUrl": null,
+    "photo2UpdatedAt": null,
+    "upiQrDataUrl": null,
+    "upiQrUpdatedAt": null,
+    "upiPayeeName": "KP HUBE",
+    "upiId": "kailash100k@axl"
+  },
+  "otpChallenges": [],
+  "resetChallenges": []
+}

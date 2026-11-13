@@ -32,7 +32,10 @@ export interface AdminRecord {
 }
 
 export interface OtpChallenge {
+  channel?: 'phone' | 'email';
+  target?: string;
   phone: string;
+  email?: string;
   code: string;
   expiresAt: number;
 }
@@ -93,9 +96,9 @@ function buildSingleCourseSeed(now: string): {
   const categories: Category[] = [
     {
       id: 'cat-complete',
-      name: 'Complete Program',
-      slug: 'complete-program',
-      description: 'Official KP HUBE Complete Video Course',
+      name: 'YouTube Mastery',
+      slug: 'youtube-mastery',
+      description: 'Complete YouTube Growth, Monetization, Title, Thumbnail & Tips Course by KP HUBE',
       order: 1,
     },
   ];
@@ -103,27 +106,28 @@ function buildSingleCourseSeed(now: string): {
   const courses: Course[] = [
     {
       id: PRIMARY_COURSE_ID,
-      title: 'KP HUBE Complete Course',
-      subtitle: 'Practical step-by-step video lessons to Learn, Grow & Succeed',
+      title: 'KP HUBE Complete YouTube Course',
+      subtitle: 'Channel Growth, Monetization, Viral Titles, Thumbnails & Pro YouTube Tricks',
       description:
-        'A focused, complete online video course by KP HUBE. Learn core digital skills, clear execution workflows, and practical growth systems through structured HD video lessons and downloadable study materials.',
+        'KP HUBE ka Complete YouTube Mastery Course — isme aap seekhenge apna YouTube channel kaise grow karein, channel monetize kaise karein, high-CTR viral titles aur clickable thumbnails kaise banayein, aur fastest growth ke liye secret YouTube tricks & tips.',
       categoryId: 'cat-complete',
-      categoryName: 'Complete Program',
+      categoryName: 'YouTube Mastery',
       thumbnailKey: 'founder:photo1',
       price: 499,
       discountPrice: null,
-      durationLabel: '5 Lessons · HD Video',
+      durationLabel: '5 Modules · HD Video',
       lessonsCount: 5,
       chapters: [
-        'Module 1: Foundations',
-        'Module 2: Practical Execution',
-        'Module 3: Growth & Mastery',
+        'Module 1: Channel Growth & Strategy',
+        'Module 2: Viral Titles & Thumbnails',
+        'Module 3: Monetization & Pro YouTube Tricks',
       ],
       learningObjectives: [
-        'Build practical digital and creative skills step by step',
-        'Follow structured checklists and real-world workflows',
-        'Download study guides and reference PDFs for every module',
-        'Learn anytime with resume-watching and progress tracking',
+        'Apna YouTube Channel 0 se tezi se kaise Grow karein',
+        'Channel Monetize karne ke sabhi steps (1000 Subs, 4000 Hrs & AdSense)',
+        'High-CTR Viral Titles likhne aur SEO rank karne ka tarika',
+        'Clickable Thumbnails design karna jo views double karein',
+        'Secret YouTube Tricks & Tips jo bade creators use karte hain',
       ],
       isFeatured: true,
       isPopular: true,
@@ -137,90 +141,90 @@ function buildSingleCourseSeed(now: string): {
     {
       id: 'les-kp-1',
       courseId: PRIMARY_COURSE_ID,
-      chapterTitle: 'Module 1: Foundations',
-      title: '01. Welcome to KP HUBE & Course Roadmap',
+      chapterTitle: 'Module 1: Channel Growth & Strategy',
+      title: '01. Apna YouTube Channel Kaise Grow Karein',
       description:
-        'How to get the maximum value from the KP HUBE Complete Course and set up your learning routine.',
+        'YouTube Algorithm kaise kaam karta hai, sahi niche select karna, aur 0 se tezi se subscribers aur views badhane ki complete strategy.',
       order: 1,
       durationSeconds: 12,
-      durationLabel: '08:20',
+      durationLabel: '14:20',
       isFreePreview: false,
       hasVideo: true,
       videoFileName: 'les-kp-1.mp4',
       videoUrl: null,
-      pdfTitle: 'KP HUBE Course Roadmap PDF',
+      pdfTitle: 'YouTube Channel Growth Guide PDF',
       hasPdf: true,
       pdfFileName: 'les-kp-1.pdf',
     },
     {
       id: 'les-kp-2',
       courseId: PRIMARY_COURSE_ID,
-      chapterTitle: 'Module 1: Foundations',
-      title: '02. Core Mindset & Skill Building Framework',
+      chapterTitle: 'Module 2: Viral Titles & Thumbnails',
+      title: '02. Viral Title Kaise Likhein (High-CTR & SEO)',
       description:
-        'Master the daily framework that turns study time into real measurable skills.',
+        'Aise clickable aur searchable YouTube titles banana jo search me rank karein aur browse feature me logon ko click karne par majboor karein.',
       order: 2,
       durationSeconds: 12,
-      durationLabel: '12:40',
+      durationLabel: '11:45',
       isFreePreview: false,
       hasVideo: true,
       videoFileName: 'les-kp-2.mp4',
       videoUrl: null,
-      pdfTitle: 'Skill Framework Worksheet',
+      pdfTitle: 'Viral Title Formula & Keywords Sheet',
       hasPdf: true,
       pdfFileName: 'les-kp-2.pdf',
     },
     {
       id: 'les-kp-3',
       courseId: PRIMARY_COURSE_ID,
-      chapterTitle: 'Module 2: Practical Execution',
-      title: '03. Step-by-Step Practical Workflow',
+      chapterTitle: 'Module 2: Viral Titles & Thumbnails',
+      title: '03. Clickable YouTube Thumbnail Design Masterclass',
       description:
-        'Hands-on walkthrough of organizing your work, tools, and output quality cleanly.',
+        'High-CTR thumbnail psychology, color contrast, clean text aur mobile screen par stand-out karne wale thumbnails banana seekhein.',
       order: 3,
       durationSeconds: 12,
-      durationLabel: '16:15',
+      durationLabel: '15:30',
       isFreePreview: false,
       hasVideo: true,
       videoFileName: 'les-kp-3.mp4',
       videoUrl: null,
-      pdfTitle: null,
-      hasPdf: false,
-      pdfFileName: null,
+      pdfTitle: 'Clickable Thumbnail Checklist PDF',
+      hasPdf: true,
+      pdfFileName: 'les-kp-3.pdf',
     },
     {
       id: 'les-kp-4',
       courseId: PRIMARY_COURSE_ID,
-      chapterTitle: 'Module 2: Practical Execution',
-      title: '04. Real-World Practice & Quality Review',
+      chapterTitle: 'Module 3: Monetization & Pro YouTube Tricks',
+      title: '04. Apna YouTube Channel Kaise Monetize Karein',
       description:
-        'Avoid common beginner mistakes using a repeatable review checklist.',
+        '1000 Subscribers, 4000 Watch Hours / 10M Shorts views criteria, AdSense approval, copyright rules aur YouTube se earning ke sabhi tarike.',
       order: 4,
       durationSeconds: 12,
-      durationLabel: '14:30',
+      durationLabel: '16:10',
       isFreePreview: false,
       hasVideo: true,
       videoFileName: 'les-kp-4.mp4',
       videoUrl: null,
-      pdfTitle: 'Quality Review Checklist PDF',
+      pdfTitle: 'YouTube Monetization Roadmap PDF',
       hasPdf: true,
       pdfFileName: 'les-kp-4.pdf',
     },
     {
       id: 'les-kp-5',
       courseId: PRIMARY_COURSE_ID,
-      chapterTitle: 'Module 3: Growth & Mastery',
-      title: '05. Consistent Growth & Next Steps',
+      chapterTitle: 'Module 3: Monetization & Pro YouTube Tricks',
+      title: '05. Pro YouTube Tricks & Tips (Fast Growth Secrets)',
       description:
-        'How to keep learning, growing, and succeeding long after completing this program.',
+        'Upload timing, YouTube Studio analytics, Shorts-to-Long audience funnel aur video viral karne ki practical YouTube tricks & tips.',
       order: 5,
       durationSeconds: 12,
-      durationLabel: '11:50',
+      durationLabel: '13:50',
       isFreePreview: false,
       hasVideo: true,
       videoFileName: 'les-kp-5.mp4',
       videoUrl: null,
-      pdfTitle: 'Growth Action Plan PDF',
+      pdfTitle: 'YouTube Tricks & Tips Action Plan PDF',
       hasPdf: true,
       pdfFileName: 'les-kp-5.pdf',
     },
@@ -332,13 +336,30 @@ class Store {
           }
         }
 
-        // Migrate old multi-course sample seed (when unpurchased) to the focused single KP HUBE Complete Course
-        const hasPrimaryCourse = this.state.courses.some((c) => c.id === PRIMARY_COURSE_ID);
-        if (!hasPrimaryCourse && this.state.purchases.length === 0) {
+        // Migrate old generic course seed to the focused KP HUBE Complete YouTube Course
+        const existingPrimary = this.state.courses.find((c) => c.id === PRIMARY_COURSE_ID);
+        const firstLesson = this.state.lessons.find((l) => l.id === 'les-kp-1');
+        if (
+          (!existingPrimary && this.state.purchases.length === 0) ||
+          (existingPrimary &&
+            existingPrimary.subtitle ===
+              'Practical step-by-step video lessons to Learn, Grow & Succeed') ||
+          (firstLesson && firstLesson.title === '01. Welcome to KP HUBE & Course Roadmap')
+        ) {
           const seeded = buildSingleCourseSeed(new Date().toISOString());
           this.state.categories = seeded.categories;
           this.state.courses = seeded.courses;
           this.state.lessons = seeded.lessons;
+          for (const id of ['les-kp-1', 'les-kp-2', 'les-kp-3', 'les-kp-4', 'les-kp-5']) {
+            try {
+              fs.rmSync(path.join(DATA_DIR, 'private-media', 'pdfs', `${id}.pdf`), { force: true });
+              fs.rmSync(path.join(DATA_DIR, 'private-media', 'videos', `${id}.mp4`), {
+                force: true,
+              });
+            } catch {
+              // ignore cleanup errors
+            }
+          }
           changed = true;
         }
 

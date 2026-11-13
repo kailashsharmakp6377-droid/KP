@@ -87,7 +87,7 @@ export function FounderPhotoFrame({
         <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6D28D9] to-[#F59E0B] text-white font-display font-bold text-lg">
           KP
         </div>
-        <p className="text-xs text-slate-500">Upload Founder Studio Photo in Admin Panel</p>
+        <p className="text-xs text-slate-500">KP HUBE Official Course</p>
       </div>
     </div>
   );

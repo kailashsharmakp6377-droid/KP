@@ -360,7 +360,7 @@ export function PaymentScreen({
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
             Your UTR reference has been submitted. The course remains locked until your payment is
-            verified by KP HUBE Admin or gateway confirmation.
+            verified by KP HUBE Team or gateway confirmation.
           </p>
 
           <div className="mt-6 rounded-2xl border border-purple-100 bg-[#FAF9FE] p-4 text-left text-xs space-y-2">

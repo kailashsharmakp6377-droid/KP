@@ -35,10 +35,33 @@ type RouteView =
   | { name: 'support' }
   | { name: 'admin' };
 
+function isPrivateAdminUrl(): boolean {
+  if (typeof window === 'undefined') return false;
+  const pathname = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const params = new URLSearchParams(window.location.search);
+  return (
+    pathname === '/admin' ||
+    pathname === '/owner-admin' ||
+    hash === '#/admin' ||
+    hash === '#/owner-admin' ||
+    params.get('admin') === '1'
+  );
+}
+
+function clearPrivateAdminUrl() {
+  if (typeof window === 'undefined') return;
+  if (isPrivateAdminUrl()) {
+    window.history.replaceState({}, '', '/');
+  }
+}
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [sessionReady, setSessionReady] = useState(false);
-  const [view, setView] = useState<RouteView>({ name: 'home' });
+  const [view, setView] = useState<RouteView>(() =>
+    isPrivateAdminUrl() ? { name: 'admin' } : { name: 'home' }
+  );
   const [pendingRoute, setPendingRoute] = useState<RouteView | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
@@ -101,6 +124,20 @@ export default function App() {
   }, [loadUserSession, loadBootstrap]);
 
   useEffect(() => {
+    const syncPrivateAdminRoute = () => {
+      if (isPrivateAdminUrl()) {
+        setView({ name: 'admin' });
+      }
+    };
+    window.addEventListener('hashchange', syncPrivateAdminRoute);
+    window.addEventListener('popstate', syncPrivateAdminRoute);
+    return () => {
+      window.removeEventListener('hashchange', syncPrivateAdminRoute);
+      window.removeEventListener('popstate', syncPrivateAdminRoute);
+    };
+  }, []);
+
+  useEffect(() => {
     return registerAndroidBackHandler(() => {
       if (view.name === 'player') {
         setView({ name: 'my-course' });
@@ -127,6 +164,9 @@ export default function App() {
   }, [view, user]);
 
   const navigateTo = (target: RouteView) => {
+    if (target.name !== 'admin') {
+      clearPrivateAdminUrl();
+    }
     setView(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -158,6 +198,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    clearPrivateAdminUrl();
     setAuthToken(null);
     setUser(null);
     setPurchasedCourseIds([]);
@@ -453,17 +494,6 @@ export default function App() {
                 Student Login
               </button>
             )}
-            <button
-              type="button"
-              onClick={() =>
-                user?.role === 'admin'
-                  ? navigateTo({ name: 'admin' })
-                  : navigateTo({ name: 'auth', mode: 'owner' })
-              }
-              className="font-semibold text-[#6D28D9] hover:underline"
-            >
-              Admin Panel
-            </button>
           </div>
         </div>
       </footer>

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
+import nodemailer from 'nodemailer';
 import { createServer as createViteServer } from 'vite';
 import {
   ensureMediaDirs,
@@ -16,7 +17,7 @@ import { hashPassword, store, verifyPassword } from './src/server/store.ts';
 import type { StoredLesson, StoredUser } from './src/server/store.ts';
 import type { Lesson, PaymentMethod, User } from './src/types.ts';
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 function getAuthSecret(): string {
@@ -34,7 +35,10 @@ function getAuthSecret(): string {
 }
 
 const AUTH_SECRET = getAuthSecret();
-const EXPECTED_OWNER_EMAIL = (process.env.OWNER_ADMIN_EMAIL || 'kpattitudeshort@gmail.com').toLowerCase();
+const RAW_OWNER_EMAIL = (process.env.OWNER_ADMIN_EMAIL || '').trim().toLowerCase();
+const EXPECTED_OWNER_EMAIL = RAW_OWNER_EMAIL.includes('@')
+  ? RAW_OWNER_EMAIL
+  : 'kpattitudeshort@gmail.com';
 
 function signToken(payload: Record<string, unknown>, ttlSeconds: number): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
@@ -184,7 +188,12 @@ async function startServer() {
 
   // Health
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, app: 'KP HUBE', razorpayConfigured: hasRazorpayKeys() });
+    res.json({
+      ok: true,
+      app: 'KP HUBE',
+      resendConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
+      razorpayConfigured: hasRazorpayKeys(),
+    });
   });
 
   // ==========================================
@@ -305,56 +314,331 @@ async function startServer() {
     res.json({ token, user: sanitizeUser(user) });
   });
 
-  app.post('/api/auth/otp/request', async (req, res) => {
-    const rawPhone = String(req.body?.phone || '').replace(/\s+/g, '');
-    if (rawPhone.length < 10) {
-      res.status(400).json({ error: 'Please enter a valid 10+ digit mobile number.' });
+  app.post('/api/auth/admin/login', (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const user = store.data.users.find((u) => u.email.toLowerCase() === email);
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      res.status(401).json({ error: 'Invalid owner email or password.' });
       return;
     }
+    const isAdminEntry = store.data.admins.some((a) => a.userId === user.id);
+    if (user.role !== 'admin' || !isAdminEntry) {
+      res.status(403).json({ error: 'Owner Admin access required.' });
+      return;
+    }
+    const token = signToken({ uid: user.id, kind: 'session', role: 'admin' }, 60 * 60 * 24 * 7);
+    res.json({ token, user: sanitizeUser(user) });
+  });
+
+  function normalizeIndianPhone(input: string): string {
+    const trimmed = String(input || '').trim();
+    let digits = trimmed.replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length === 11 && digits.startsWith('0')) {
+      digits = digits.slice(1);
+    }
+    if (digits.length === 10) {
+      return `+91${digits}`;
+    }
+    if (digits.length === 12 && digits.startsWith('91')) {
+      return `+${digits}`;
+    }
+    return trimmed.startsWith('+') ? `+${digits}` : `+91${digits}`;
+  }
+
+  async function trySendSmsOtp(phone: string, code: string): Promise<boolean> {
+    const fast2SmsKey = process.env.FAST2SMS_API_KEY?.trim();
+    if (fast2SmsKey) {
+      try {
+        const local10 = phone.replace(/\D/g, '').slice(-10);
+        const resp = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+          method: 'POST',
+          headers: {
+            authorization: fast2SmsKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            route: 'q',
+            message: `Your KP HUBE verification OTP is ${code}. Valid for 5 minutes.`,
+            language: 'english',
+            flash: 0,
+            numbers: local10,
+          }),
+        });
+        if (resp.ok) {
+          const data = (await resp.json().catch(() => ({}))) as { return?: boolean };
+          if (data.return !== false) return true;
+        }
+      } catch (err) {
+        console.error('Fast2SMS delivery error:', err);
+      }
+    }
+
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID?.trim();
+    const twilioToken = process.env.TWILIO_AUTH_TOKEN?.trim();
+    const twilioFrom = process.env.TWILIO_FROM_NUMBER?.trim();
+    if (twilioSid && twilioToken && twilioFrom) {
+      try {
+        const params = new URLSearchParams({
+          To: phone,
+          From: twilioFrom,
+          Body: `Your KP HUBE verification OTP is ${code}. Valid for 5 minutes.`,
+        });
+        const resp = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(twilioSid)}/Messages.json`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64')}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+          }
+        );
+        if (resp.ok) return true;
+      } catch (err) {
+        console.error('Twilio delivery error:', err);
+      }
+    }
+
+    return false;
+  }
+
+  async function trySendEmailOtp(email: string, code: string): Promise<boolean> {
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    if (resendKey) {
+      try {
+        const resp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: process.env.EMAIL_FROM || 'KP HUBE <onboarding@resend.dev>',
+            to: [email],
+            subject: `${code} is your KP HUBE verification OTP`,
+            html: `<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #ede9fe;border-radius:16px"><h2 style="color:#6D28D9;margin:0 0 8px">KP HUBE Verification</h2><p style="color:#475569;font-size:14px">Use this 6-digit OTP to sign in to KP HUBE:</p><p style="font-size:28px;font-weight:bold;letter-spacing:6px;color:#1e1035;background:#faf9fe;padding:14px 18px;border-radius:12px;text-align:center">${code}</p><p style="color:#64748b;font-size:12px">Valid for 10 minutes. Do not share this code with anyone.</p></div>`,
+          }),
+        });
+        if (resp.ok) return true;
+        const errText = await resp.text().catch(() => '');
+        console.error('Resend API rejected request:', resp.status, errText);
+      } catch (err) {
+        console.error('Resend email delivery error:', err);
+      }
+    }
+
+    const gmailUser = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim();
+    const gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').trim();
+    if (gmailUser && gmailPass) {
+      try {
+        const transporter = process.env.SMTP_HOST
+          ? nodemailer.createTransport({
+              host: process.env.SMTP_HOST,
+              port: Number(process.env.SMTP_PORT || 587),
+              secure: Number(process.env.SMTP_PORT || 587) === 465,
+              auth: { user: gmailUser, pass: gmailPass },
+            })
+          : nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: gmailUser, pass: gmailPass },
+            });
+
+        await transporter.sendMail({
+          from: `"KP HUBE" <${gmailUser}>`,
+          to: email,
+          subject: `${code} is your KP HUBE verification OTP`,
+          text: `Your KP HUBE verification OTP is ${code}. Valid for 10 minutes.`,
+          html: `<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #ede9fe;border-radius:16px"><h2 style="color:#6D28D9;margin:0 0 8px">KP HUBE Verification</h2><p style="color:#475569;font-size:14px">Use this 6-digit OTP to sign in to KP HUBE:</p><p style="font-size:28px;font-weight:bold;letter-spacing:6px;color:#1e1035;background:#faf9fe;padding:14px 18px;border-radius:12px;text-align:center">${code}</p><p style="color:#64748b;font-size:12px">Valid for 10 minutes. Do not share this code with anyone.</p></div>`,
+        });
+        return true;
+      } catch (err) {
+        console.error('Gmail/SMTP delivery error:', err);
+      }
+    }
+
+    return false;
+  }
+
+  app.post('/api/auth/otp/request', async (req, res) => {
+    const requestedChannel = req.body?.channel === 'email' || (!req.body?.phone && req.body?.email)
+      ? 'email'
+      : 'phone';
+
+    if (requestedChannel === 'email') {
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        res.status(400).json({ error: 'Please enter a valid Gmail or email address.' });
+        return;
+      }
+
+      const existingAdmin = store.data.users.find(
+        (u) => u.email.toLowerCase() === email && u.role === 'admin'
+      );
+      if (existingAdmin) {
+        res.status(403).json({ error: 'Please use a student Gmail ID to register or sign in.' });
+        return;
+      }
+
+      const code = String(crypto.randomInt(100000, 999999));
+      store.data.otpChallenges = store.data.otpChallenges.filter(
+        (o) => !(o.channel === 'email' && (o.target === email || o.email === email))
+      );
+      store.data.otpChallenges.push({
+        channel: 'email',
+        target: email,
+        phone: '',
+        email,
+        code,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+      await store.save();
+
+      const delivered = await trySendEmailOtp(email, code);
+      res.json({
+        sent: true,
+        channel: 'email',
+        target: email,
+        delivered,
+        message: delivered
+          ? `6-digit OTP sent to ${email}. Please check your Gmail inbox or spam folder.`
+          : `Verification OTP generated for ${email}. Enter the code shown below to continue.`,
+        previewOtp: delivered ? undefined : code,
+      });
+      return;
+    }
+
+    const normalizedPhone = normalizeIndianPhone(String(req.body?.phone || ''));
+    const digitsOnly = normalizedPhone.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      res.status(400).json({ error: 'Please enter a valid 10-digit Indian mobile number.' });
+      return;
+    }
+
     const code = String(crypto.randomInt(100000, 999999));
-    store.data.otpChallenges = store.data.otpChallenges.filter((o) => o.phone !== rawPhone);
+    store.data.otpChallenges = store.data.otpChallenges.filter(
+      (o) => o.target !== normalizedPhone && o.phone !== normalizedPhone
+    );
     store.data.otpChallenges.push({
-      phone: rawPhone,
+      channel: 'phone',
+      target: normalizedPhone,
+      phone: normalizedPhone,
       code,
       expiresAt: Date.now() + 5 * 60 * 1000,
     });
     await store.save();
 
+    const delivered = await trySendSmsOtp(normalizedPhone, code);
     res.json({
       sent: true,
-      message: 'OTP generated. Configure an SMS provider in production for live SMS delivery.',
-      previewOtp: IS_PROD ? undefined : code,
+      channel: 'phone',
+      target: normalizedPhone,
+      delivered,
+      message: delivered
+        ? `6-digit OTP sent via SMS to ${normalizedPhone}.`
+        : `Verification OTP generated for ${normalizedPhone}. Enter the code shown below to continue.`,
+      previewOtp: delivered ? undefined : code,
     });
   });
 
   app.post('/api/auth/otp/verify', async (req, res) => {
-    const rawPhone = String(req.body?.phone || '').replace(/\s+/g, '');
+    const requestedChannel = req.body?.channel === 'email' || (!req.body?.phone && req.body?.email)
+      ? 'email'
+      : 'phone';
     const code = String(req.body?.code || '').trim();
     const name = String(req.body?.name || '').trim();
 
+    if (requestedChannel === 'email') {
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const challenge = store.data.otpChallenges.find(
+        (o) =>
+          o.channel === 'email' &&
+          (o.target === email || o.email === email) &&
+          o.code === code &&
+          o.expiresAt > Date.now()
+      );
+      if (!challenge) {
+        res.status(400).json({ error: 'Invalid or expired OTP code.' });
+        return;
+      }
+
+      const existingAdmin = store.data.users.find(
+        (u) => u.email.toLowerCase() === email && u.role === 'admin'
+      );
+      if (existingAdmin) {
+        res.status(403).json({ error: 'Owner login requires password authentication.' });
+        return;
+      }
+
+      store.data.otpChallenges = store.data.otpChallenges.filter(
+        (o) => !(o.channel === 'email' && (o.target === email || o.email === email))
+      );
+
+      let user = store.data.users.find((u) => u.email.toLowerCase() === email);
+      if (!user) {
+        const now = new Date().toISOString();
+        const emailHandle = email.split('@')[0] || 'Student';
+        user = {
+          id: `usr_${crypto.randomUUID().slice(0, 10)}`,
+          name: name || emailHandle,
+          email,
+          phone: '',
+          role: 'student',
+          avatarUrl: null,
+          passwordHash: hashPassword(crypto.randomBytes(24).toString('hex')),
+          createdAt: now,
+        };
+        store.data.users.push(user);
+      } else if (name && name.length >= 2 && user.name.startsWith('Student ')) {
+        user.name = name;
+      }
+      await store.save();
+
+      const token = signToken({ uid: user.id, kind: 'session', role: user.role }, 60 * 60 * 24 * 7);
+      res.json({ token, user: sanitizeUser(user) });
+      return;
+    }
+
+    const normalizedPhone = normalizeIndianPhone(String(req.body?.phone || ''));
     const challenge = store.data.otpChallenges.find(
-      (o) => o.phone === rawPhone && o.code === code && o.expiresAt > Date.now()
+      (o) =>
+        (o.channel !== 'email') &&
+        (o.target === normalizedPhone || o.phone === normalizedPhone) &&
+        o.code === code &&
+        o.expiresAt > Date.now()
     );
     if (!challenge) {
       res.status(400).json({ error: 'Invalid or expired OTP code.' });
       return;
     }
-    store.data.otpChallenges = store.data.otpChallenges.filter((o) => o.phone !== rawPhone);
+    store.data.otpChallenges = store.data.otpChallenges.filter(
+      (o) => o.target !== normalizedPhone && o.phone !== normalizedPhone
+    );
 
-    let user = store.data.users.find((u) => u.phone === rawPhone);
+    let user = store.data.users.find(
+      (u) => u.phone === normalizedPhone || normalizeIndianPhone(u.phone) === normalizedPhone
+    );
+    if (user && user.role === 'admin') {
+      res.status(403).json({ error: 'Owner login requires password authentication.' });
+      return;
+    }
     if (!user) {
       const now = new Date().toISOString();
       user = {
         id: `usr_${crypto.randomUUID().slice(0, 10)}`,
-        name: name || `Student ${rawPhone.slice(-4)}`,
-        email: `phone.${rawPhone.replace(/[^0-9]/g, '')}@student.kphube.local`,
-        phone: rawPhone,
+        name: name || `Student ${normalizedPhone.slice(-4)}`,
+        email: `phone.${normalizedPhone.replace(/[^0-9]/g, '')}@student.kphube.local`,
+        phone: normalizedPhone,
         role: 'student',
         avatarUrl: null,
         passwordHash: hashPassword(crypto.randomBytes(24).toString('hex')),
         createdAt: now,
       };
       store.data.users.push(user);
+    } else if (name && name.length >= 2 && user.name.startsWith('Student ')) {
+      user.name = name;
     }
     await store.save();
 
@@ -380,10 +664,14 @@ async function startServer() {
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
     await store.save();
+    const delivered = await trySendEmailOtp(email, code);
     res.json({
       sent: true,
-      message: 'Verification code generated for password reset.',
-      previewResetCode: IS_PROD ? undefined : code,
+      delivered,
+      message: delivered
+        ? `Reset verification code sent to ${email} via Resend.`
+        : 'Verification code generated for password reset.',
+      previewResetCode: delivered ? undefined : code,
     });
   });
 

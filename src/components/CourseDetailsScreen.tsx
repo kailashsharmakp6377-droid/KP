@@ -82,7 +82,7 @@ export function CourseDetailsScreen({
           <div className="flex flex-col justify-between p-6 sm:p-8 md:col-span-7">
             <div>
               <p className="font-mono text-xs font-semibold text-[#6D28D9]">
-                KP HUBE COMPLETE COURSE
+                KP HUBE • {(course.categoryName || 'YOUTUBE MASTERY').toUpperCase()}
               </p>
               <h1 className="mt-1.5 font-display text-2xl font-bold text-slate-900 sm:text-3xl">
                 {course.title}
@@ -120,6 +120,26 @@ export function CourseDetailsScreen({
           </div>
         </div>
       </div>
+
+      {/* Topics Covered in This YouTube Course */}
+      {course.learningObjectives.length > 0 && (
+        <section className="rounded-[28px] border border-purple-100 bg-white p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="border-b border-purple-50 pb-3">
+            <p className="font-mono text-xs font-semibold text-[#B45309]">TOPICS COVERED</p>
+            <h2 className="mt-1 font-display text-xl font-bold text-slate-900">
+              What You Will Learn in This YouTube Course
+            </h2>
+          </div>
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {course.learningObjectives.map((topic) => (
+              <li key={topic} className="flex items-start gap-2.5 text-sm text-slate-700">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#6D28D9] shrink-0" aria-hidden="true" />
+                <span>{topic}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Video Lessons Included */}
       <section className="rounded-[28px] border border-purple-100 bg-white p-6 sm:p-8 shadow-sm space-y-5">
