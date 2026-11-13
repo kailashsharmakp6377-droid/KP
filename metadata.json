@@ -1,0 +1,8 @@
+{
+  "name": "KP HUBE",
+  "description": "KP HUBE — LEARN • GROW • SUCCEED. Official online course marketplace, protected HD video learning platform, and owner studio dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
